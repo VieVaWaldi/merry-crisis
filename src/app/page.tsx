@@ -1,101 +1,143 @@
-import Image from "next/image";
+"use client";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const router = useRouter();
+  const [timeLeft, setTimeLeft] = useState("");
+  // const [isTimeReached, setIsTimeReached] = useState(false);
+  const [showParty, setShowParty] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [textParty, setTextParty] = useState(false);
+  const [audio] = useState(
+    typeof Audio !== "undefined" ? new Audio("/song/yay.mp3") : null
+  );
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  useEffect(() => {
+    const handleInteraction = () => setHasInteracted(true);
+    document.addEventListener("click", handleInteraction);
+    return () => document.removeEventListener("click", handleInteraction);
+  }, []);
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const targetTime = new Date();
+      targetTime.setHours(17, 40, 0, 0);
+      // targetTime.setHours(20, 00, 0, 0);
+      const now = new Date();
+      const difference = targetTime.getTime() - now.getTime();
+
+      if (difference <= 0) {
+        setTimeLeft("00:00:00");
+        // setIsTimeReached(true);
+        setTimeout(() => {
+          setShowParty(true);
+          if (hasInteracted && audio) {
+            audio.play().catch(() => console.log("Audio playback failed"));
+          }
+          setTextParty(true);
+          setTimeout(() => router.push("/page1"), 3000);
+        }, 1000);
+        return;
+      }
+
+      const hours = Math.floor(difference / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      setTimeLeft(
+        `${hours.toString().padStart(2, "0")}:${minutes
+          .toString()
+          .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+      );
+    };
+
+    const timer = setInterval(calculateTimeLeft, 1000);
+    calculateTimeLeft();
+
+    return () => clearInterval(timer);
+  }, [router, hasInteracted, audio]);
+
+  const PartyPoppers = () => {
+    const poppers = Array.from({ length: 50 }, () => ({
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      delay: Math.random() * 0.5,
+    }));
+
+    return (
+      <div className="fixed inset-0 pointer-events-none">
+        {poppers.map((popper, i) => (
+          <motion.div
+            key={i}
+            className="absolute text-4xl"
+            initial={{
+              x: `${popper.x}vw`,
+              y: "100vh",
+              opacity: 0,
+            }}
+            animate={{
+              y: `${popper.y}vh`,
+              opacity: 1,
+              rotate: [0, 360],
+            }}
+            transition={{
+              duration: 1,
+              delay: popper.delay,
+              rotate: { duration: 2, repeat: Infinity },
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+            🎉
+          </motion.div>
+        ))}
+      </div>
+    );
+  };
+
+  interface PartyTextProps {
+    text: string;
+    className: string;
+  }
+
+  const PartyText = ({ text, className }: PartyTextProps) => (
+    <div className={className}>
+      {text.split("").map((char, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 1 }}
+          animate={textParty ? { opacity: 0 } : {}}
+          transition={{ delay: i * 0.1 }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          {char}
+        </motion.span>
+      ))}
+      {text.split("").map((_, i) => (
+        <motion.span
+          key={i}
+          className="absolute"
+          style={{ left: `${(i / text.length) * 100}%` }}
+          initial={{ opacity: 0 }}
+          animate={textParty ? { opacity: 1 } : {}}
+          transition={{ delay: i * 0.1 }}
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          🎉
+        </motion.span>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="page-container flex min-h-screen flex-col items-center justify-center p-8">
+      <PartyText
+        text="Merry Crisis"
+        className="text-6xl mb-8 text-center relative"
+      />
+      <PartyText
+        text={timeLeft}
+        className="text-7xl font-mono mb-8 text-pink-500 relative"
+      />
+      {showParty && <PartyPoppers />}
     </div>
   );
 }

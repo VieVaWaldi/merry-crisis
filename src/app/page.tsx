@@ -23,8 +23,8 @@ export default function Home() {
   useEffect(() => {
     const calculateTimeLeft = () => {
       const targetTime = new Date();
-      targetTime.setHours(17, 40, 0, 0);
-      // targetTime.setHours(20, 00, 0, 0);
+      // targetTime.setHours(17, 40, 0, 0);
+      targetTime.setHours(20, 0, 0, 0);
       const now = new Date();
       const difference = targetTime.getTime() - now.getTime();
 

@@ -24,7 +24,7 @@ export default function Home() {
     const calculateTimeLeft = () => {
       const targetTime = new Date();
       // targetTime.setHours(17, 40, 0, 0);
-      targetTime.setHours(21, 0, 0, 0);
+      targetTime.setHours(0, 0, 1, 0);
       const now = new Date();
       const difference = targetTime.getTime() - now.getTime();
 
